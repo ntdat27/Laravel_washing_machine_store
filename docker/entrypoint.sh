@@ -11,8 +11,13 @@ if [ -n "$MYSQL_ATTR_SSL_CA" ]; then
     SSL_CERT_PATH="${SSL_DIR}/ca.pem"
     mkdir -p "$SSL_DIR"
 
-    # Nếu $MYSQL_ATTR_SSL_CA là nội dung chứng chỉ PEM hoặc base64
-    if [ ! -f "$MYSQL_ATTR_SSL_CA" ]; then
+    if [ -f "$MYSQL_ATTR_SSL_CA" ]; then
+        echo "Using existing SSL CA certificate file at: $MYSQL_ATTR_SSL_CA"
+        # Sao chép vào thư mục khả ghi trong container để tránh lỗi Read-only file system (Render Secret Files)
+        cp "$MYSQL_ATTR_SSL_CA" "$SSL_CERT_PATH"
+        chmod 644 "$SSL_CERT_PATH" 2>/dev/null || true
+        export MYSQL_ATTR_SSL_CA="$SSL_CERT_PATH"
+    else
         echo "Creating SSL CA certificate from environment variable..."
         if echo "$MYSQL_ATTR_SSL_CA" | grep -q "BEGIN CERTIFICATE"; then
             echo "$MYSQL_ATTR_SSL_CA" > "$SSL_CERT_PATH"
@@ -24,13 +29,10 @@ if [ -n "$MYSQL_ATTR_SSL_CA" ]; then
                 echo "$MYSQL_ATTR_SSL_CA" > "$SSL_CERT_PATH"
             fi
         fi
-        chmod 644 "$SSL_CERT_PATH"
+        chmod 644 "$SSL_CERT_PATH" 2>/dev/null || true
         export MYSQL_ATTR_SSL_CA="$SSL_CERT_PATH"
-        echo "SSL CA certificate installed at: $SSL_CERT_PATH"
-    else
-        echo "Using existing SSL CA certificate file at: $MYSQL_ATTR_SSL_CA"
-        chmod 644 "$MYSQL_ATTR_SSL_CA"
     fi
+    echo "SSL CA certificate ready at: $MYSQL_ATTR_SSL_CA"
 fi
 
 # ---------------------------------------------------------
@@ -43,8 +45,8 @@ envsubst '${PORT}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
 # ---------------------------------------------------------
 # Đảm bảo phân quyền lưu trữ và cache
 # ---------------------------------------------------------
-chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
-chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || true
+chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || true
 
 # Tạo symbolic link cho storage nếu chưa có
 php artisan storage:link --no-interaction || true
