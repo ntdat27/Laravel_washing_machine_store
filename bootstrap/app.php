@@ -12,6 +12,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
 
+        // Cấu hình Trust Proxies để Laravel nhận diện đúng HTTPS từ reverse proxy của Render
+        $middleware->trustProxies(at: '*');
+
         // GIỮ NGUYÊN ALIAS ADMIN CỦA BẠN
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
