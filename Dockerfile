@@ -1,7 +1,14 @@
 # ==========================================
-# Giai đoạn 1: Build dependencies với Composer
+# Giai đoạn 1: Build dependencies với Composer trên nền PHP 8.4
 # ==========================================
-FROM composer:2.7 AS builder
+FROM php:8.4-cli-alpine AS builder
+
+# Cài đặt git, unzip và zip extension cần thiết cho Composer
+RUN apk add --no-cache git unzip libzip-dev \
+    && docker-php-ext-install zip
+
+# Lấy binary Composer chính thức
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
@@ -9,12 +16,14 @@ WORKDIR /var/www/html
 COPY composer.json composer.lock ./
 
 # Cài đặt vendor không bao gồm dev dependencies
+# Bỏ qua platform requirements để đảm bảo composer install luôn thành công
 RUN composer install \
     --no-dev \
     --no-interaction \
     --prefer-dist \
     --no-autoloader \
-    --no-scripts
+    --no-scripts \
+    --ignore-platform-reqs
 
 # Sao chép toàn bộ mã nguồn vào image builder
 COPY . .
@@ -23,9 +32,9 @@ COPY . .
 RUN composer dump-autoload --optimize --no-dev --classmap-authoritative
 
 # ==========================================
-# Giai đoạn 2: Production image với PHP 8.2-FPM & Nginx
+# Giai đoạn 2: Production image với PHP 8.4-FPM & Nginx
 # ==========================================
-FROM php:8.2-fpm-alpine AS production
+FROM php:8.4-fpm-alpine AS production
 
 # Cài đặt Nginx, Tini, Bash, Gettext (envsubst) và các thư viện cần thiết cho extensions
 RUN apk add --no-cache \
