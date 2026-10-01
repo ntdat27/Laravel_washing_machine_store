@@ -225,38 +225,27 @@
                         <i class="{{ $isWishlisted ? 'fa-solid text-danger' : 'fa-regular text-muted' }} fa-heart" style="font-size:1.1rem;"></i>
                     </button>
 
-                    @if($product->image)
-                        <img id="main-product-img"
-                             src="{{ asset('storage/' . $product->image) }}"
-                             alt="{{ $product->name }}"
-                             class="img-fluid"
-                             style="max-height:100%;max-width:100%;object-fit:contain;transition:opacity .3s ease;">
-                    @else
-                        <div id="main-product-img" class="text-center text-muted">
-                            <i class="fa-solid fa-washing-machine fa-6x opacity-25"></i>
-                            <p class="mt-3 small fw-600" style="font-weight:600;">Chưa có hình ảnh</p>
-                        </div>
-                    @endif
+                    <img id="main-product-img"
+                         src="{{ $product->image_url }}"
+                         alt="{{ $product->name }}"
+                         class="img-fluid"
+                         style="max-height:100%;max-width:100%;object-fit:contain;transition:opacity .3s ease;">
                 </div>
 
                 {{-- Thumbnails --}}
                 @if($product->variants->isNotEmpty())
                     <div class="d-flex flex-wrap gap-2 justify-content-center" id="thumbnail-gallery">
-                        @if($product->image)
-                            <img src="{{ asset('storage/' . $product->image) }}"
-                                 class="thumbnail-img active"
-                                 data-src="{{ asset('storage/' . $product->image) }}"
-                                 onclick="switchImage(this)" alt="Ảnh chính">
-                        @endif
+                        <img src="{{ $product->image_url }}"
+                             class="thumbnail-img active"
+                             data-src="{{ $product->image_url }}"
+                             onclick="switchImage(this)" alt="Ảnh chính">
                         @foreach($product->variants as $v)
-                            @if($v->image)
-                                <img src="{{ asset('storage/' . $v->image) }}"
-                                     alt="{{ $v->color_name }}"
-                                     class="thumbnail-img"
-                                     data-src="{{ asset('storage/' . $v->image) }}"
-                                     title="{{ $v->color_name }}"
-                                     onclick="switchImage(this)">
-                            @endif
+                            <img src="{{ $v->image_url }}"
+                                 alt="{{ $v->color_name }}"
+                                 class="thumbnail-img"
+                                 data-src="{{ $v->image_url }}"
+                                 title="{{ $v->color_name }}"
+                                 onclick="switchImage(this)">
                         @endforeach
                     </div>
                 @endif

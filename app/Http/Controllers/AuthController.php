@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
@@ -20,35 +21,30 @@ class AuthController extends Controller
     public function register(Request $request): RedirectResponse
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6|confirmed',
         ]);
 
+        // Tạo tài khoản và kích hoạt email ngay lập tức để tránh lỗi timeout/chặn SMTP trên cloud
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => 'customer'
+            'name'              => $request->name,
+            'email'             => $request->email,
+            'password'          => Hash::make($request->password),
+            'role'              => 'user',
+            'email_verified_at' => now(),
         ]);
 
-        $emailSent = false;
+        // Thử gửi notification email xác nhận (nếu hệ thống mail được cấu hình)
         try {
             event(new Registered($user));
-            $emailSent = true;
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning('Không thể gửi email xác thực tài khoản qua SMTP: ' . $e->getMessage());
-            // Nếu SMTP gặp sự cố hoặc timeout trên cloud, tự động kích hoạt email để khách hàng không bị kẹt
-            $user->markEmailAsVerified();
+            Log::warning('[Mail] Không thể gửi email chào mừng/xác thực: ' . $e->getMessage());
         }
 
         Auth::login($user);
 
-        if ($user->hasVerifiedEmail() && !$emailSent) {
-            return redirect()->route('welcome')->with('success', 'Đăng ký tài khoản thành công!');
-        }
-
-        return redirect()->route('verification.notice');
+        return redirect()->route('welcome')->with('success', 'Đăng ký tài khoản thành công! Chào mừng bạn đến với WashingStore.');
     }
 
     public function showLoginForm(): View
@@ -59,15 +55,16 @@ class AuthController extends Controller
     public function login(Request $request): RedirectResponse
     {
         $credentials = $request->validate([
-            'email' => 'required|email',
+            'email'    => 'required|email',
             'password' => 'required',
         ]);
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
 
+            // Tự động kích hoạt email cho các tài khoản cũ chưa kịp xác thực để không bị kẹt trang
             if (!Auth::user()->hasVerifiedEmail()) {
-                return redirect()->route('verification.notice');
+                Auth::user()->forceFill(['email_verified_at' => now()])->save();
             }
 
             if (Auth::user()->role === 'admin') {

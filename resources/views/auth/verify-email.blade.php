@@ -40,10 +40,17 @@
 
                         <hr class="my-4 border-light">
 
-                        <p class="text-muted small mb-3">Bạn chưa nhận được email?</p>
+                        <form method="POST" action="{{ route('verification.instant') }}" class="mb-3">
+                            @csrf
+                            <button type="submit" class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm w-100">
+                                <i class="fa-solid fa-bolt me-2"></i> Kích hoạt tài khoản ngay (Không cần đợi email)
+                            </button>
+                        </form>
+
+                        <p class="text-muted small mb-2">Hoặc gửi lại email qua hòm thư:</p>
                         <form method="POST" action="{{ route('verification.send') }}">
                             @csrf
-                            <button type="submit" class="btn btn-outline-primary rounded-pill px-4 fw-bold shadow-sm">
+                            <button type="submit" class="btn btn-outline-secondary rounded-pill px-4 fw-bold shadow-sm">
                                 <i class="fa-solid fa-rotate-right me-2"></i> Gửi lại email xác nhận
                             </button>
                         </form>

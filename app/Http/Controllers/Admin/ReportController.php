@@ -63,7 +63,7 @@ class ReportController extends Controller
     {
         $categoryRevenue = $this->categoryRevenue();
         $totalOrders = Order::where('created_at', '<=', now())->count();
-        $totalCustomers = DB::table('users')->where('role', 'user')->count();
+        $totalCustomers = DB::table('users')->whereIn('role', ['user', 'customer'])->count();
         $revenueByDate = $this->dailyRevenue();
         $revenueByMonth = $this->periodRevenue($revenueByDate, 'month');
         $revenueByYear = $this->periodRevenue($revenueByDate, 'year');

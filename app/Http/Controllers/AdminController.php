@@ -35,8 +35,8 @@ class AdminController extends Controller
         // - Đã hủy
         $cancelledOrders = Order::where('status', 'cancelled')->orWhere('shipping_status', 'cancelled')->count();
 
-        // 3. Tổng số khách hàng
-        $totalCustomers = User::where('role', 'user')->count();
+        // 3. Tổng số khách hàng (hỗ trợ cả role 'user' và 'customer')
+        $totalCustomers = User::whereIn('role', ['user', 'customer'])->count();
 
         // 4. Doanh thu theo 30 ngày gần nhất
         $thirtyDaysAgo = Carbon::now()->subDays(29)->startOfDay();

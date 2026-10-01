@@ -59,4 +59,18 @@ class Product extends Model
                 $query->whereIn('status', ['paid', 'cod_paid']);
             })->sum('quantity');
     }
+
+    /**
+     * URL hình ảnh đầy đủ (tương thích cả link online Unsplash và ảnh upload nội bộ)
+     */
+    public function getImageUrlAttribute(): string
+    {
+        if (empty($this->image)) {
+            return 'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?w=800&auto=format&fit=crop&q=80';
+        }
+        if (str_starts_with($this->image, 'http://') || str_starts_with($this->image, 'https://')) {
+            return $this->image;
+        }
+        return asset('storage/' . $this->image);
+    }
 }

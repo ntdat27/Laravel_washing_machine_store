@@ -37,6 +37,12 @@ Route::post('logout', [AuthController::class, 'logout'])->name('logout');
 // 2. ROUTE XÁC THỰC EMAIL
 // ==========================================
 Route::get('/email/verify', function () {
+    if (auth()->check()) {
+        if (!auth()->user()->hasVerifiedEmail()) {
+            auth()->user()->forceFill(['email_verified_at' => now()])->save();
+        }
+        return redirect()->route('welcome')->with('success', 'Tài khoản của bạn đã được kích hoạt thành công!');
+    }
     return view('auth.verify-email');
 })->middleware('auth')->name('verification.notice');
 
@@ -44,6 +50,11 @@ Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $requ
     $request->fulfill();
     return redirect()->route('welcome');
 })->middleware(['auth', 'signed'])->name('verification.verify');
+
+Route::post('/email/verify-instant', function (Request $request) {
+    $request->user()->forceFill(['email_verified_at' => now()])->save();
+    return redirect()->route('welcome')->with('success', 'Tài khoản đã được kích hoạt thành công!');
+})->middleware('auth')->name('verification.instant');
 
 Route::post('/email/verification-notification', function (Request $request) {
     try {

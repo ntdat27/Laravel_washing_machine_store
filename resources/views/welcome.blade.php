@@ -282,11 +282,7 @@
 
                         <a href="{{ route('user.products.show', $product->id) }}" class="d-block text-decoration-none">
                             <div class="product-img-wrapper">
-                                @if($product->image)
-                                    <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" class="product-img">
-                                @else
-                                    <i class="fa-solid fa-washing-machine fa-4x text-secondary opacity-25"></i>
-                                @endif
+                                <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="product-img">
                             </div>
                         </a>
 

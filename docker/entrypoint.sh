@@ -6,6 +6,12 @@ echo "=== WashingStore Container Starting ==="
 # ---------------------------------------------------------
 # 1. Trích xuất và cấp quyền chứng chỉ SSL từ biến $MYSQL_ATTR_SSL_CA
 # ---------------------------------------------------------
+# Tự động nhận diện nếu người dùng tải cert lên qua Render Secret Files (/etc/secrets/ca.pem)
+if [ -z "$MYSQL_ATTR_SSL_CA" ] && [ -f "/etc/secrets/ca.pem" ]; then
+    echo "Auto-detected SSL CA file at /etc/secrets/ca.pem"
+    export MYSQL_ATTR_SSL_CA="/etc/secrets/ca.pem"
+fi
+
 if [ -n "$MYSQL_ATTR_SSL_CA" ]; then
     SSL_DIR="/etc/ssl/mysql"
     SSL_CERT_PATH="${SSL_DIR}/ca.pem"
@@ -13,7 +19,7 @@ if [ -n "$MYSQL_ATTR_SSL_CA" ]; then
 
     if [ -f "$MYSQL_ATTR_SSL_CA" ]; then
         echo "Using existing SSL CA certificate file at: $MYSQL_ATTR_SSL_CA"
-        # Sao chép vào thư mục khả ghi trong container để tránh lỗi Read-only file system (Render Secret Files)
+        # Sao chép vào thư mục khả ghi trong container để tránh lỗi Read-only file system
         cp "$MYSQL_ATTR_SSL_CA" "$SSL_CERT_PATH"
         chmod 644 "$SSL_CERT_PATH" 2>/dev/null || true
         export MYSQL_ATTR_SSL_CA="$SSL_CERT_PATH"
@@ -52,6 +58,9 @@ chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || 
 php artisan storage:link --no-interaction || true
 
 # Tối ưu hóa bộ nhớ đệm Laravel
+php artisan config:clear || true
+php artisan route:clear || true
+php artisan view:clear || true
 php artisan config:cache || true
 php artisan route:cache || true
 php artisan view:cache || true
