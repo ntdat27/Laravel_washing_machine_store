@@ -188,8 +188,11 @@ class ProductController extends Controller
     {
         $product->load(['variants' => function ($q) {
             $q->orderBy('color_name');
-        }, 'category']);
+        }, 'category', 'reviews.user']);
 
-        return view('user.products.show', compact('product'));
+        $totalReview = $product->reviews->count();
+        $avgRating   = $product->avgRating();
+
+        return view('user.products.show', compact('product', 'totalReview', 'avgRating'));
     }
 }

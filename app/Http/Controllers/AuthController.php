@@ -26,25 +26,25 @@ class AuthController extends Controller
             'password' => 'required|string|min:6|confirmed',
         ]);
 
-        // Tạo tài khoản và kích hoạt email ngay lập tức để tránh lỗi timeout/chặn SMTP trên cloud
+        // Tạo tài khoản mới (ở trạng thái chưa xác thực email)
         $user = User::create([
-            'name'              => $request->name,
-            'email'             => $request->email,
-            'password'          => Hash::make($request->password),
-            'role'              => 'user',
-            'email_verified_at' => now(),
+            'name'     => $request->name,
+            'email'    => $request->email,
+            'password' => Hash::make($request->password),
+            'role'     => 'user',
         ]);
 
-        // Thử gửi notification email xác nhận (nếu hệ thống mail được cấu hình)
+        // Bắn sự kiện Registered để Laravel gửi email chứa link xác nhận
         try {
             event(new Registered($user));
         } catch (\Throwable $e) {
-            Log::warning('[Mail] Không thể gửi email chào mừng/xác thực: ' . $e->getMessage());
+            Log::error('[Mail] Lỗi gửi email xác thực tài khoản: ' . $e->getMessage());
         }
 
+        // Đăng nhập tạm để đưa vào trang chờ xác thực email
         Auth::login($user);
 
-        return redirect()->route('welcome')->with('success', 'Đăng ký tài khoản thành công! Chào mừng bạn đến với WashingStore.');
+        return redirect()->route('verification.notice');
     }
 
     public function showLoginForm(): View
@@ -62,9 +62,9 @@ class AuthController extends Controller
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
 
-            // Tự động kích hoạt email cho các tài khoản cũ chưa kịp xác thực để không bị kẹt trang
+            // Nếu chưa xác thực email, bắt buộc chuyển hướng tới trang xác thực
             if (!Auth::user()->hasVerifiedEmail()) {
-                Auth::user()->forceFill(['email_verified_at' => now()])->save();
+                return redirect()->route('verification.notice');
             }
 
             if (Auth::user()->role === 'admin') {

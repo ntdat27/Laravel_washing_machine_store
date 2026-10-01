@@ -37,23 +37,20 @@ Route::post('logout', [AuthController::class, 'logout'])->name('logout');
 // 2. ROUTE XÁC THỰC EMAIL
 // ==========================================
 Route::get('/email/verify', function () {
-    if (auth()->check()) {
-        if (!auth()->user()->hasVerifiedEmail()) {
-            auth()->user()->forceFill(['email_verified_at' => now()])->save();
-        }
-        return redirect()->route('welcome')->with('success', 'Tài khoản của bạn đã được kích hoạt thành công!');
+    if (auth()->check() && auth()->user()->hasVerifiedEmail()) {
+        return redirect()->route('welcome')->with('info', 'Tài khoản của bạn đã được xác thực.');
     }
     return view('auth.verify-email');
 })->middleware('auth')->name('verification.notice');
 
 Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
     $request->fulfill();
-    return redirect()->route('welcome');
+    return redirect()->route('welcome')->with('success', 'Xác thực email thành công! Chào mừng bạn đến với WashingStore.');
 })->middleware(['auth', 'signed'])->name('verification.verify');
 
 Route::post('/email/verify-instant', function (Request $request) {
     $request->user()->forceFill(['email_verified_at' => now()])->save();
-    return redirect()->route('welcome')->with('success', 'Tài khoản đã được kích hoạt thành công!');
+    return redirect()->route('welcome')->with('success', 'Xác thực tài khoản thành công!');
 })->middleware('auth')->name('verification.instant');
 
 Route::post('/email/verification-notification', function (Request $request) {

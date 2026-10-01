@@ -503,6 +503,29 @@
                     <div class="col-md-8">
                         <div class="review-form-card h-100">
                             <h5 class="fw-700 mb-4 text-dark" style="font-weight:700;">Gửi đánh giá của bạn</h5>
+
+                            @if(session('success'))
+                                <div class="alert alert-success border-0 shadow-sm rounded-3 py-2 px-3 small fw-bold mb-3">
+                                    <i class="fa-solid fa-circle-check me-2"></i>{{ session('success') }}
+                                </div>
+                            @endif
+
+                            @if(session('error'))
+                                <div class="alert alert-danger border-0 shadow-sm rounded-3 py-2 px-3 small fw-bold mb-3">
+                                    <i class="fa-solid fa-circle-exclamation me-2"></i>{{ session('error') }}
+                                </div>
+                            @endif
+
+                            @if($errors->any())
+                                <div class="alert alert-danger border-0 shadow-sm rounded-3 py-2 px-3 small fw-bold mb-3">
+                                    <ul class="mb-0 ps-3">
+                                        @foreach($errors->all() as $err)
+                                            <li>{{ $err }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endif
+
                             @auth
                                 <form action="{{ route('reviews.store') }}" method="POST">
                                     @csrf
