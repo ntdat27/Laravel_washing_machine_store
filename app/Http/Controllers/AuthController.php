@@ -32,8 +32,21 @@ class AuthController extends Controller
             'role' => 'customer'
         ]);
 
-        event(new Registered($user));
+        $emailSent = false;
+        try {
+            event(new Registered($user));
+            $emailSent = true;
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Không thể gửi email xác thực tài khoản qua SMTP: ' . $e->getMessage());
+            // Nếu SMTP gặp sự cố hoặc timeout trên cloud, tự động kích hoạt email để khách hàng không bị kẹt
+            $user->markEmailAsVerified();
+        }
+
         Auth::login($user);
+
+        if ($user->hasVerifiedEmail() && !$emailSent) {
+            return redirect()->route('welcome')->with('success', 'Đăng ký tài khoản thành công!');
+        }
 
         return redirect()->route('verification.notice');
     }

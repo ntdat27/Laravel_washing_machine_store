@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
         DB::transaction(function () {
             $this->call([
                 AdminUserSeeder::class,
+                ProductCategorySeeder::class,
             ]);
         });
     }

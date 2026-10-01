@@ -46,8 +46,13 @@ Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $requ
 })->middleware(['auth', 'signed'])->name('verification.verify');
 
 Route::post('/email/verification-notification', function (Request $request) {
-    $request->user()->sendEmailVerificationNotification();
-    return back()->with('message', 'Verification link sent!');
+    try {
+        $request->user()->sendEmailVerificationNotification();
+        return back()->with('message', 'Email xác nhận mới đã được gửi!');
+    } catch (\Throwable $e) {
+        \Illuminate\Support\Facades\Log::warning('Gửi lại email xác thực thất bại: ' . $e->getMessage());
+        return back()->with('error', 'Hệ thống gửi thư đang bận hoặc bị giới hạn mạng. Vui lòng thử lại sau.');
+    }
 })->middleware(['auth', 'throttle:6,1'])->name('verification.send');
 
 

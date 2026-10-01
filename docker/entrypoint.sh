@@ -57,19 +57,23 @@ php artisan route:cache || true
 php artisan view:cache || true
 
 # ---------------------------------------------------------
-# 3. Chạy php artisan migrate --force nếu $RUN_MIGRATIONS=true
+# 3. Chạy migrations (mặc định tự động chạy trừ khi RUN_MIGRATIONS=false)
 # ---------------------------------------------------------
-if [ "$RUN_MIGRATIONS" = "true" ] || [ "$RUN_MIGRATIONS" = "1" ]; then
+if [ "$RUN_MIGRATIONS" != "false" ]; then
     echo "Running database migrations..."
-    php artisan migrate --force
+    php artisan migrate --force || true
 fi
 
 # ---------------------------------------------------------
-# 4. Chạy php artisan db:seed --force nếu $RUN_SEEDERS=true
+# 4. Chạy seeders khởi tạo dữ liệu
 # ---------------------------------------------------------
 if [ "$RUN_SEEDERS" = "true" ] || [ "$RUN_SEEDERS" = "1" ]; then
-    echo "Running database seeders..."
-    php artisan db:seed --force
+    echo "Running full database seeders..."
+    php artisan db:seed --force || true
+else
+    # Tự động nạp danh mục và sản phẩm mẫu vào database
+    echo "Ensuring product and category catalog data..."
+    php artisan db:seed --class=ProductCategorySeeder --force || true
 fi
 
 # ---------------------------------------------------------
