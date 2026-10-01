@@ -54,13 +54,29 @@ Route::post('/email/verify-instant', function (Request $request) {
 })->middleware('auth')->name('verification.instant');
 
 Route::post('/email/verification-notification', function (Request $request) {
-    try {
-        $request->user()->sendEmailVerificationNotification();
-        return back()->with('message', 'Email xác nhận mới đã được gửi!');
-    } catch (\Throwable $e) {
-        \Illuminate\Support\Facades\Log::warning('Gửi lại email xác thực thất bại: ' . $e->getMessage());
-        return back()->with('error', 'Hệ thống gửi thư đang bận hoặc bị giới hạn mạng. Vui lòng thử lại sau.');
+    $host = config('mail.mailers.smtp.host');
+    $port = (int) config('mail.mailers.smtp.port', 587);
+    $canConnect = false;
+
+    if (!empty($host) && config('mail.default') === 'smtp') {
+        $fp = @fsockopen($host, $port, $errno, $errstr, 1.0);
+        if (is_resource($fp)) {
+            fclose($fp);
+            $canConnect = true;
+        }
     }
+
+    if ($canConnect) {
+        try {
+            $request->user()->sendEmailVerificationNotification();
+            return back()->with('message', 'Email xác nhận mới đã được gửi vào hòm thư của bạn! Vui lòng kiểm tra hộp thư.');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Gửi lại email xác thực thất bại: ' . $e->getMessage());
+            return back()->with('error', 'Hệ thống gửi thư đang bận: ' . $e->getMessage());
+        }
+    }
+
+    return back()->with('error', 'Cổng gửi thư SMTP đang bị hạn chế bởi máy chủ Cloud. Bạn có thể bấm nút "Xác Nhận Kích Hoạt Ngay" ở trên để kích hoạt tài khoản.');
 })->middleware(['auth', 'throttle:6,1'])->name('verification.send');
 
 

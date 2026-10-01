@@ -202,13 +202,15 @@ class MomoController extends Controller
         // Load Order cùng quan hệ để gửi Mail và tạo GHN
         $order = Order::with('items.product', 'user', 'paymentTransactions')->find($result[1]);
 
-        // Gửi Email Xác Nhận cho đơn MoMo
-        try {
-            if ($order && $order->user) {
-                \Illuminate\Support\Facades\Mail::to($order->user->email)->send(new \App\Mail\OrderConfirmation($order));
+        // Gửi Email Xác Nhận cho đơn MoMo (nếu kết nối SMTP hoạt động)
+        if ($this->canSendSmtp()) {
+            try {
+                if ($order && $order->user) {
+                    \Illuminate\Support\Facades\Mail::to($order->user->email)->send(new \App\Mail\OrderConfirmation($order));
+                }
+            } catch (\Exception $e) {
+                Log::error('[Email] Lỗi gửi email xác nhận đơn hàng (MoMo): ' . $e->getMessage());
             }
-        } catch (\Exception $e) {
-            Log::error('[Email] Lỗi gửi email xác nhận đơn hàng (MoMo): ' . $e->getMessage());
         }
 
         try {

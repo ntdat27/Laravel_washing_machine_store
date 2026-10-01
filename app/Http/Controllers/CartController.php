@@ -394,11 +394,13 @@ class CartController extends Controller
                 $order->update(['status' => 'cod_ordered']);
             }
 
-            // Gửi Email Xác Nhận cho đơn COD
-            try {
-                \Illuminate\Support\Facades\Mail::to(Auth::user()->email)->send(new \App\Mail\OrderConfirmation($order));
-            } catch (\Exception $e) {
-                Log::error('[Email] Lỗi gửi email xác nhận đơn hàng: ' . $e->getMessage());
+            // Gửi Email Xác Nhận cho đơn COD (nếu kết nối SMTP hoạt động)
+            if ($this->canSendSmtp()) {
+                try {
+                    \Illuminate\Support\Facades\Mail::to(Auth::user()->email)->send(new \App\Mail\OrderConfirmation($order));
+                } catch (\Exception $e) {
+                    Log::error('[Email] Lỗi gửi email xác nhận đơn hàng: ' . $e->getMessage());
+                }
             }
 
             session()->forget('cart');

@@ -26,7 +26,7 @@ class AuthController extends Controller
             'password' => 'required|string|min:6|confirmed',
         ]);
 
-        // Tạo tài khoản mới (ở trạng thái chưa xác thực email)
+        // Tạo tài khoản mới (chưa xác thực email để yêu cầu người dùng xác nhận)
         $user = User::create([
             'name'     => $request->name,
             'email'    => $request->email,
@@ -34,11 +34,15 @@ class AuthController extends Controller
             'role'     => 'user',
         ]);
 
-        // Bắn sự kiện Registered để Laravel gửi email chứa link xác nhận
-        try {
-            event(new Registered($user));
-        } catch (\Throwable $e) {
-            Log::error('[Mail] Lỗi gửi email xác thực tài khoản: ' . $e->getMessage());
+        // Kiểm tra nhanh kết nối SMTP trong 1 giây để tránh bị treo 30 giây gây lỗi 502 trên Render
+        if ($this->canSendSmtp()) {
+            try {
+                event(new Registered($user));
+            } catch (\Throwable $e) {
+                Log::warning('[Mail] Không thể gửi email xác thực: ' . $e->getMessage());
+            }
+        } else {
+            Log::info('[Mail] Mạng Render chặn cổng SMTP 587. Bỏ qua gửi email đồng bộ để tránh lỗi 502 Bad Gateway.');
         }
 
         // Đăng nhập tạm để đưa vào trang chờ xác thực email
@@ -62,7 +66,7 @@ class AuthController extends Controller
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
 
-            // Nếu chưa xác thực email, bắt buộc chuyển hướng tới trang xác thực
+            // Nếu tài khoản chưa xác thực email, bắt buộc chuyển hướng tới trang xác thực
             if (!Auth::user()->hasVerifiedEmail()) {
                 return redirect()->route('verification.notice');
             }

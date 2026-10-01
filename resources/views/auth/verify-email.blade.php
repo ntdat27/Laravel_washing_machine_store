@@ -33,8 +33,14 @@
                             Spam) và click vào link xác nhận để kích hoạt tài khoản hoàn toàn.</p>
 
                         @if (session('message'))
-                            <div class="alert alert-success border-0 shadow-sm rounded-3 py-2 small fw-bold">
-                                <i class="fa-solid fa-check-circle me-1"></i> Email xác nhận mới đã được gửi!
+                            <div class="alert alert-success border-0 shadow-sm rounded-3 py-2 small fw-bold mb-3">
+                                <i class="fa-solid fa-check-circle me-1"></i> {{ session('message') }}
+                            </div>
+                        @endif
+
+                        @if (session('error'))
+                            <div class="alert alert-warning border-0 shadow-sm rounded-3 py-2 small fw-bold mb-3 text-start">
+                                <i class="fa-solid fa-triangle-exclamation me-1"></i> {{ session('error') }}
                             </div>
                         @endif
 
@@ -43,7 +49,7 @@
                         <form method="POST" action="{{ route('verification.instant') }}" class="mb-3">
                             @csrf
                             <button type="submit" class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm w-100">
-                                <i class="fa-solid fa-bolt me-2"></i> Kích hoạt tài khoản ngay (Không cần đợi email)
+                                <i class="fa-solid fa-check-double me-2"></i> Xác Nhận Kích Hoạt Tài Khoản Ngay
                             </button>
                         </form>
 
